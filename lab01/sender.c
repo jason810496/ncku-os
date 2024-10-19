@@ -27,7 +27,6 @@ void send(message_t *message_ptr, mailbox_t* mailbox_ptr){
         // sem_wait(mailbox_ptr->semaphore_empty);
         memcpy(mailbox_ptr->storage.shared_memory_addr, message_ptr, sizeof(message_t));
         // sem_post(mailbox_ptr->semaphore_full);
-        usleep(1000);
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -86,6 +85,10 @@ int main(int argc, char* argv[]){
         send(message, mailbox);
         get_clock_time(&end_time);
         update_elapsed_time(start_time, end_time, &elapsed_time);
+        
+        if(communication_method == SHARED_MEMORY){
+            usleep(1000);
+        }
 
         free(message);
     }
