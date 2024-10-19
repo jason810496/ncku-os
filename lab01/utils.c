@@ -39,8 +39,8 @@ mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
             exit(EXIT_FAILURE);
         }
         // semaphore
-        mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0666, (cur_role == SENDER) ? 1 : 0);
-        mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0666, 0);
+        // mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0777, (cur_role == SENDER) ? 1 : 0);
+        // mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0777, 0);
     }
     else{
         return NULL;
@@ -48,7 +48,7 @@ mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
     return mailbox;
 }
 
-void free_mailbox(mailbox_t* mailbox){
+void free_mailbox(mailbox_t* mailbox, enum role cur_role){
     if(mailbox->flag == SHARED_MEMORY){
         if(munmap(mailbox->storage.shared_memory_addr, sizeof(message_t)) == -1){
             perror("munmap");
@@ -58,17 +58,19 @@ void free_mailbox(mailbox_t* mailbox){
             perror("close");
             exit(EXIT_FAILURE);
         }
-        if(shm_unlink(SHARED_MEMORY_NAME) == -1){
-            perror("shm_unlink");
-            exit(EXIT_FAILURE);
-        }
-        if(sem_close(mailbox->semaphore_empty) == -1){
-            perror("sem_close");
-            exit(EXIT_FAILURE);
-        }
-        if(sem_close(mailbox->semaphore_full) == -1){
-            perror("sem_close");
-            exit(EXIT_FAILURE);
+        if(cur_role == SENDER){
+            if(shm_unlink(SHARED_MEMORY_NAME) == -1){
+                perror("shm_unlink");
+                exit(EXIT_FAILURE);
+            }
+            // if(sem_close(mailbox->semaphore_empty) == -1){
+            //     perror("sem_close");
+            //     exit(EXIT_FAILURE);
+            // }
+            // if(sem_close(mailbox->semaphore_full) == -1){
+            //     perror("sem_close");
+            //     exit(EXIT_FAILURE);
+            // }
         }
     }
     free(mailbox);
@@ -102,4 +104,11 @@ int is_exit_message(message_t* message){
 
 int is_start_message(message_t* message){
     return strcmp(message->text, START_MESSAGE) == 0;
+}
+
+int is_empty_message(message_t* message){
+    if(message == NULL){
+        return 1;
+    }
+    return strcmp(message->text, "") == 0;
 }

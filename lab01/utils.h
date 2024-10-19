@@ -42,11 +42,12 @@ extern char* START_MESSAGE;
 message_t* create_message(char* text);
 mailbox_t* create_mailbox(enum ipc_method method, enum role cur_role);
 // destructor
-void free_mailbox(mailbox_t* mailbox);
+void free_mailbox(mailbox_t* mailbox,enum role cur_role);
 
 // message
 int is_exit_message(message_t* message);
 int is_start_message(message_t* message);
+int is_empty_message(message_t* message);
 
 // stdout
 void print_with_color(const char* color, const char* message);
