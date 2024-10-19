@@ -1,20 +1,32 @@
 CC := gcc
 override CFLAGS += -O3 -Wall
 
-SOURCE1 := sender.c
-BINARY1 := sender
+OBJS = utils.o schema.o
+DEPS = utils.h schema.h
 
-SOURCE2 := receiver.c
-BINARY2 := receiver
+all: sender receiver
 
-all: $(BINARY1) $(BINARY2)
+# Compile the sender program
+sender: sender.o $(OBJS)
+	$(CC) $(CFLAGS) -o sender sender.o $(OBJS)
 
-$(BINARY1): $(SOURCE1) $(patsubst %.c, %.h, $(SOURCE1))
-	$(CC) $(CFLAGS) $< -o $@
+# Compile the receiver program
+receiver: receiver.o $(OBJS)
+	$(CC) $(CFLAGS) -o receiver receiver.o $(OBJS)
 
-$(BINARY2): $(SOURCE2) $(patsubst %.c, %.h, $(SOURCE2))
-	$(CC) $(CFLAGS) $< -o $@
+# Compile object files
+sender.o: sender.c $(DEPS)
+	$(CC) $(CFLAGS) -c sender.c
 
-.PHONY: clean
+receiver.o: receiver.c $(DEPS)
+	$(CC) $(CFLAGS) -c receiver.c
+
+utils.o: utils.c utils.h
+	$(CC) $(CFLAGS) -c utils.c
+
+schema.o: schema.c schema.h
+	$(CC) $(CFLAGS) -c schema.c
+
+# Clean up generated files
 clean:
-	rm -f $(BINARY1) $(BINARY2)
+	rm -f *.o sender receiver
