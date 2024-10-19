@@ -1,4 +1,12 @@
 #include "receiver.h"
+#include "utils.h"
+
+/*
+Usage: ./receiver 1
+(1 for Message Passing, 2 for Shared Memory)
+
+Message size: 1-1024 bytes
+*/
 
 void receive(message_t* message_ptr, mailbox_t* mailbox_ptr){
     /*  TODO: 

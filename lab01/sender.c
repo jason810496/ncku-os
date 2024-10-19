@@ -1,4 +1,12 @@
 #include "sender.h"
+#include "utils.h"
+
+/*
+Usage: ./sender 1 input.txt
+(1 for Message Passing, 2 for Shared Memory)
+
+Message size: 1-1024 bytes
+*/
 
 void send(message_t message, mailbox_t* mailbox_ptr){
     /*  TODO: 
