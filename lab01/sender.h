@@ -14,4 +14,4 @@
 
 #include "schema.h"
 
-void send(message_t message, mailbox_t* mailbox_ptr);
+void send(message_t *message_ptr, mailbox_t* mailbox_ptr);

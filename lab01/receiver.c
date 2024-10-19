@@ -7,16 +7,14 @@ Usage: ./receiver 1
 Message size: 1-1024 bytes
 */
 
-enum ipc_method communication_method;
-
 void receive(message_t* message_ptr, mailbox_t* mailbox_ptr){
     /*  TODO: 
         1. Use flag to determine the communication method
         2. According to the communication method, receive the message
     */
+   enum ipc_method communication_method = (enum ipc_method)mailbox_ptr->flag;
    if(communication_method == MESSAGE_PASSING){
-        key_t key = ftok("keyfile.tmp", 666);
-        int msgid = msgget(key, 0666 | IPC_CREAT);
+        int msgid = msgget(mailbox_ptr->storage.msqid, 0666 | IPC_CREAT);
         if(msgid == -1){
             fprintf(stderr, "msgget failed\n");
             return;
@@ -26,9 +24,7 @@ void receive(message_t* message_ptr, mailbox_t* mailbox_ptr){
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
-        // Shared Memory
-        // Receive the message from the mailbox
-        // Use the mailbox pointer
+        memcpy(message_ptr, mailbox_ptr->storage.shared_memory_addr, sizeof(message_t));
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -54,7 +50,8 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
     int flag = atoi(argv[1]);
-    communication_method = (enum ipc_method)flag;
+    enum ipc_method communication_method = (enum ipc_method)flag;
+    show_communication_method(communication_method);
 
     mailbox_t* mailbox = create_mailbox(flag);
     if(mailbox == NULL){
@@ -82,9 +79,10 @@ int main(int argc, char* argv[]){
         get_clock_time(&end_time);
         update_elapsed_time(start_time, end_time, &elapsed_time);
     }
+    print_with_color(COLOR_RED, "Sender exit!\n");
 
     show_time(RECEIVING, elapsed_time);
-
+    free_mailbox(mailbox);
 
     return EXIT_SUCCESS;
 }

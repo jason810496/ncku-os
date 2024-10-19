@@ -7,28 +7,24 @@ Usage: ./sender 1 input.txt
 Message size: 1-1024 bytes
 */
 
-enum ipc_method communication_method;
-
-void send(message_t message, mailbox_t* mailbox_ptr){
+void send(message_t *message_ptr, mailbox_t* mailbox_ptr){
     /*  TODO: 
         1. Use flag to determine the communication method
         2. According to the communication method, send the message
     */
+    enum ipc_method communication_method = (enum ipc_method)mailbox_ptr->flag;
     if(communication_method == MESSAGE_PASSING){
-        key_t key = ftok("keyfile.tmp", 666);
-        int msgid = msgget(key, 0666 | IPC_CREAT);
+        int msgid = msgget(mailbox_ptr->storage.msqid, 0666 | IPC_CREAT);
         if(msgid == -1){
             fprintf(stderr, "msgget failed\n");
             return;
         }
-        if(msgsnd(msgid, &message, sizeof(message_t), 0) == -1){
+        if(msgsnd(msgid, message_ptr, sizeof(message_t), 0) == -1){
             fprintf(stderr, "msgsnd failed\n");
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
-        // Shared Memory
-        // Send the message to the mailbox
-        // Use the mailbox pointer
+        memcpy(mailbox_ptr->storage.shared_memory_addr, message_ptr, sizeof(message_t));
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -57,9 +53,10 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
     int flag = atoi(argv[1]);
-    communication_method = (enum ipc_method)flag;
-    char* input_file = argv[2];
+    enum ipc_method communication_method = (enum ipc_method)flag;
+    show_communication_method(communication_method);
 
+    char* input_file = argv[2];
     FILE* fp = fopen(input_file, "r");
     if(fp == NULL){
         fprintf(stderr, "File open error: %s\n", input_file);
@@ -73,7 +70,7 @@ int main(int argc, char* argv[]){
     }
 
     message_t* start_message = create_message(START_MESSAGE);
-    send(*start_message, mailbox);
+    send(start_message, mailbox);
     free(start_message);
 
     char buffer[1024];
@@ -83,19 +80,22 @@ int main(int argc, char* argv[]){
         message_t* message = create_message(buffer);
 
         get_clock_time(&start_time);
-        send(*message, mailbox);
+        send(message, mailbox);
         get_clock_time(&end_time);
         update_elapsed_time(start_time, end_time, &elapsed_time);
 
         free(message);
     }
     fclose(fp);
+    print_with_color(COLOR_RED, "End of input file !\n");
 
     message_t* exit_message = create_message(EXIT_MESSAGE);
-    send(*exit_message, mailbox);
+    send(exit_message, mailbox);
     free(exit_message);
+    print_with_color(COLOR_RED, "exit!\n");
 
     show_time(SENDING, elapsed_time);
+    free_mailbox(mailbox);
 
     return EXIT_SUCCESS;
 }
