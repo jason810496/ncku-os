@@ -6,7 +6,9 @@ const char *COLOR_GREEN = "\033[0;32m";
 const char *COLOR_RESET = "\033[0m";
 
 const char *KEY_FILE_NAME = "keyfile.tmp";
-const char *SHARED_MEMORY_NAME = "shared_memory";
+const char *SHARED_MEMORY_NAME = "/shared_memory";
+const char *SEMAPHORE_FULL_NAME = "/semaphore_full";
+const char *SEMAPHORE_EMPTY_NAME = "/semaphore_empty";
 
 char* EXIT_MESSAGE = "EXIT";
 char* START_MESSAGE = "START";
@@ -17,7 +19,7 @@ message_t* create_message(char* text){
     return message;
 }
 
-mailbox_t* create_mailbox(enum ipc_method method){
+mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
     mailbox_t* mailbox = (mailbox_t*)malloc(sizeof(mailbox_t));
     mailbox->flag = (int)method;
     if(method == MESSAGE_PASSING){
@@ -25,16 +27,20 @@ mailbox_t* create_mailbox(enum ipc_method method){
         mailbox->storage.msqid = key;
     }
     else if(method == SHARED_MEMORY){
-        int shm_id = shm_open(SHARED_MEMORY_NAME, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-        if( ftruncate(shm_id, sizeof(message_t)) == -1){
+        int shm_fd = shm_open(SHARED_MEMORY_NAME, O_CREAT | O_RDWR, 0777);
+        mailbox->shared_memory_fd = shm_fd;
+        if( ftruncate(shm_fd, sizeof(message_t)) == -1){
             perror("ftruncate");
             exit(EXIT_FAILURE);
         }
-        mailbox->storage.shared_memory_addr = mmap(NULL, sizeof(message_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_id, 0);
+        mailbox->storage.shared_memory_addr = mmap(NULL, sizeof(message_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
         if(mailbox->storage.shared_memory_addr == MAP_FAILED){
             perror("mmap");
             exit(EXIT_FAILURE);
         }
+        // semaphore
+        mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0666, (cur_role == SENDER) ? 1 : 0);
+        mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0666, 0);
     }
     else{
         return NULL;
@@ -46,6 +52,22 @@ void free_mailbox(mailbox_t* mailbox){
     if(mailbox->flag == SHARED_MEMORY){
         if(munmap(mailbox->storage.shared_memory_addr, sizeof(message_t)) == -1){
             perror("munmap");
+            exit(EXIT_FAILURE);
+        }
+        if(close(mailbox->shared_memory_fd) == -1){
+            perror("close");
+            exit(EXIT_FAILURE);
+        }
+        if(shm_unlink(SHARED_MEMORY_NAME) == -1){
+            perror("shm_unlink");
+            exit(EXIT_FAILURE);
+        }
+        if(sem_close(mailbox->semaphore_empty) == -1){
+            perror("sem_close");
+            exit(EXIT_FAILURE);
+        }
+        if(sem_close(mailbox->semaphore_full) == -1){
+            perror("sem_close");
             exit(EXIT_FAILURE);
         }
     }
@@ -64,8 +86,8 @@ void get_clock_time(struct timespec* time){
     clock_gettime(CLOCK_MONOTONIC, time);
 }
 
-void show_time(enum verb verb, double elapsed_time){
-    char *verb_str = (verb == SENDING) ? "sending" : "receiving";
+void show_time(enum role cur_role, double elapsed_time){
+    char *verb_str = (cur_role == SENDER) ? "sending" : "receiving";
     printf("Total time taken in %s msg: %f s\n", verb_str, elapsed_time);
 }
 

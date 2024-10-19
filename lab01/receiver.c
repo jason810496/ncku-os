@@ -24,7 +24,10 @@ void receive(message_t* message_ptr, mailbox_t* mailbox_ptr){
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
+        sem_wait(mailbox_ptr->semaphore_full);
         memcpy(message_ptr, mailbox_ptr->storage.shared_memory_addr, sizeof(message_t));
+        sem_post(mailbox_ptr->semaphore_empty);
+        usleep(10);
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -53,13 +56,17 @@ int main(int argc, char* argv[]){
     enum ipc_method communication_method = (enum ipc_method)flag;
     show_communication_method(communication_method);
 
-    mailbox_t* mailbox = create_mailbox(flag);
+    mailbox_t* mailbox = create_mailbox(flag, RECEIVER);
     if(mailbox == NULL){
         fprintf(stderr, "Mailbox creation failed\n");
         return EXIT_FAILURE;
     }
     message_t* message = create_message("");
     // block, waiting for the start message
+    if(communication_method == SHARED_MEMORY ){
+        sem_post(mailbox->semaphore_empty);
+        usleep(10);
+    }
     receive(message, mailbox);
     if(!is_start_message(message)){
         fprintf(stderr, "First message should be the start message\n");
@@ -81,7 +88,7 @@ int main(int argc, char* argv[]){
     }
     print_with_color(COLOR_RED, "Sender exit!\n");
 
-    show_time(RECEIVING, elapsed_time);
+    show_time(RECEIVER, elapsed_time);
     free_mailbox(mailbox);
 
     return EXIT_SUCCESS;

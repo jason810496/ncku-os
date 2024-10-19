@@ -24,7 +24,13 @@ void send(message_t *message_ptr, mailbox_t* mailbox_ptr){
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
+        sem_wait(mailbox_ptr->semaphore_empty);
+        printf("message_ptr: %s\n", message_ptr->text);
+        printf("shared_memory_addr: %s\n", mailbox_ptr->storage.shared_memory_addr);
+        usleep(1000);
         memcpy(mailbox_ptr->storage.shared_memory_addr, message_ptr, sizeof(message_t));
+        sem_post(mailbox_ptr->semaphore_full);
+        
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -63,7 +69,7 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
 
-    mailbox_t* mailbox = create_mailbox(flag);
+    mailbox_t* mailbox = create_mailbox(flag, SENDER);
     if(mailbox == NULL){
         fprintf(stderr, "Mailbox creation failed\n");
         return EXIT_FAILURE;
@@ -94,7 +100,7 @@ int main(int argc, char* argv[]){
     free(exit_message);
     print_with_color(COLOR_RED, "exit!\n");
 
-    show_time(SENDING, elapsed_time);
+    show_time(SENDER, elapsed_time);
     free_mailbox(mailbox);
 
     return EXIT_SUCCESS;

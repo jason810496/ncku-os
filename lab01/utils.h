@@ -23,9 +23,9 @@ extern const char *COLOR_BLUE;
 extern const char *COLOR_GREEN;
 extern const char *COLOR_RESET;
 // verb enum
-enum verb {
-    SENDING,
-    RECEIVING
+enum role {
+    SENDER,
+    RECEIVER
 };
 // IPC method
 enum ipc_method {
@@ -40,7 +40,7 @@ extern char* START_MESSAGE;
 */
 // constructor
 message_t* create_message(char* text);
-mailbox_t* create_mailbox(enum ipc_method method);
+mailbox_t* create_mailbox(enum ipc_method method, enum role cur_role);
 // destructor
 void free_mailbox(mailbox_t* mailbox);
 
@@ -50,7 +50,7 @@ int is_start_message(message_t* message);
 
 // stdout
 void print_with_color(const char* color, const char* message);
-void show_time(enum verb verb, double elapsed_time);
+void show_time(enum role cur_role, double elapsed_time);
 void show_communication_method(enum ipc_method method);
 void update_elapsed_time(struct timespec start_time, struct timespec end_time, double* elapsed_time);
 void get_clock_time(struct timespec* time);

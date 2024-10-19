@@ -8,11 +8,11 @@ all: sender receiver
 
 # Compile the sender program
 sender: sender.o $(OBJS)
-	$(CC) $(CFLAGS) -o sender sender.o $(OBJS) -lrt
+	$(CC) $(CFLAGS) -o sender sender.o $(OBJS) -lrt -lpthread
 
 # Compile the receiver program
 receiver: receiver.o $(OBJS)
-	$(CC) $(CFLAGS) -o receiver receiver.o $(OBJS) -lrt
+	$(CC) $(CFLAGS) -o receiver receiver.o $(OBJS) -lrt -lpthread
 
 # Compile object files
 sender.o: sender.c $(DEPS)
@@ -22,7 +22,7 @@ receiver.o: receiver.c $(DEPS)
 	$(CC) $(CFLAGS) -c receiver.c
 
 utils.o: utils.c utils.h
-	$(CC) $(CFLAGS) -c utils.c
+	$(CC) $(CFLAGS) -lrt -lpthread -c utils.c
 
 schema.o: schema.c schema.h
 	$(CC) $(CFLAGS) -c schema.c
