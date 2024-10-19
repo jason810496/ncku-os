@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  os_lab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: os_lab_container
+    volumes:
+      - ./lab01:/home/lab01
+    tty: true
+    stdin_open: true
