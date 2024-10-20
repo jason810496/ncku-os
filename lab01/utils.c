@@ -22,6 +22,9 @@ message_t* create_message(char* text){
 mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
     mailbox_t* mailbox = (mailbox_t*)malloc(sizeof(mailbox_t));
     mailbox->flag = (int)method;
+    // semaphore
+    mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0777, (cur_role == SENDER) ? 1 : 0);
+    mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0777, 0);
     if(method == MESSAGE_PASSING){
         key_t key = ftok(KEY_FILE_NAME, 666);
         mailbox->storage.msqid = key;
@@ -38,9 +41,6 @@ mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
             perror("mmap");
             exit(EXIT_FAILURE);
         }
-        // semaphore
-        mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0777, (cur_role == SENDER) ? 1 : 0);
-        mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0777, 0);
     }
     else{
         return NULL;

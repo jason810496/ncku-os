@@ -13,6 +13,7 @@ void send(message_t *message_ptr, mailbox_t* mailbox_ptr){
         2. According to the communication method, send the message
     */
     enum ipc_method communication_method = (enum ipc_method)mailbox_ptr->flag;
+    sem_wait(mailbox_ptr->semaphore_empty);
     if(communication_method == MESSAGE_PASSING){
         int msgid = msgget(mailbox_ptr->storage.msqid, 0666 | IPC_CREAT);
         if(msgid == -1){
@@ -24,14 +25,13 @@ void send(message_t *message_ptr, mailbox_t* mailbox_ptr){
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
-        sem_wait(mailbox_ptr->semaphore_empty);
         memcpy(mailbox_ptr->storage.shared_memory_addr, message_ptr, sizeof(message_t));
-        sem_post(mailbox_ptr->semaphore_full);
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
         return;
     }
+    sem_post(mailbox_ptr->semaphore_full);
 }
 
 int main(int argc, char* argv[]){
