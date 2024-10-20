@@ -18,6 +18,8 @@ RUN apt-get install -y python3-pip
 RUN apt-get install -y python3-dev
 # Linters
 RUN apt-get install -y clang-format
+# Misc
+RUN apt-get install -y sudo
 
 
 # zsh quick setup
