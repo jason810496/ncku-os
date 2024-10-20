@@ -30,4 +30,4 @@ schema.o: schema.c schema.h
 # Clean up generated files
 clean:
 	rm -f *.o sender receiver
-	rm /dev/shm/*
+	./clean-shm.sh
