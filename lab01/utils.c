@@ -39,8 +39,8 @@ mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
             exit(EXIT_FAILURE);
         }
         // semaphore
-        // mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0777, (cur_role == SENDER) ? 1 : 0);
-        // mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0777, 0);
+        mailbox->semaphore_empty = sem_open(SEMAPHORE_FULL_NAME, O_CREAT, 0777, (cur_role == SENDER) ? 1 : 0);
+        mailbox->semaphore_full = sem_open(SEMAPHORE_EMPTY_NAME, O_CREAT, 0777, 0);
     }
     else{
         return NULL;
@@ -63,14 +63,14 @@ void free_mailbox(mailbox_t* mailbox, enum role cur_role){
                 perror("shm_unlink");
                 exit(EXIT_FAILURE);
             }
-            // if(sem_close(mailbox->semaphore_empty) == -1){
-            //     perror("sem_close");
-            //     exit(EXIT_FAILURE);
-            // }
-            // if(sem_close(mailbox->semaphore_full) == -1){
-            //     perror("sem_close");
-            //     exit(EXIT_FAILURE);
-            // }
+            if(sem_close(mailbox->semaphore_empty) == -1){
+                perror("sem_close");
+                exit(EXIT_FAILURE);
+            }
+            if(sem_close(mailbox->semaphore_full) == -1){
+                perror("sem_close");
+                exit(EXIT_FAILURE);
+            }
         }
     }
     free(mailbox);

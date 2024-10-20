@@ -24,9 +24,9 @@ void receive(message_t* message_ptr, mailbox_t* mailbox_ptr){
             return;
         }
     }else if(communication_method == SHARED_MEMORY){
-        // sem_wait(mailbox_ptr->semaphore_full);
+        sem_wait(mailbox_ptr->semaphore_full);
         memcpy(message_ptr, mailbox_ptr->storage.shared_memory_addr, sizeof(message_t));
-        // sem_post(mailbox_ptr->semaphore_empty);
+        sem_post(mailbox_ptr->semaphore_empty);
     }
     else{
         fprintf(stderr, "Invalid communication method\n");
@@ -62,20 +62,10 @@ int main(int argc, char* argv[]){
     }
     message_t* message = create_message("");
     // block, waiting for the start message
-    if(communication_method == MESSAGE_PASSING){
-        receive(message, mailbox);
-        if(!is_start_message(message)){
-            fprintf(stderr, "First message should be the start message\n");
-            return EXIT_FAILURE;
-        }
-
-    }
-    else if(communication_method == SHARED_MEMORY){
-        receive(message, mailbox);
-        while(is_empty_message(message) || is_start_message(message)){
-            receive(message, mailbox);
-            usleep(1000);
-        }
+    receive(message, mailbox);
+    if(!is_start_message(message)){
+        fprintf(stderr, "First message should be the start message\n");
+        return EXIT_FAILURE;
     }
     
 
@@ -92,9 +82,6 @@ int main(int argc, char* argv[]){
         get_clock_time(&end_time);
         update_elapsed_time(start_time, end_time, &elapsed_time);
 
-        if(communication_method == SHARED_MEMORY){
-            usleep(1000);
-        }
     }
     print_with_color(COLOR_RED, "Sender exit!\n");
 
