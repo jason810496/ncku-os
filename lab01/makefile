@@ -4,6 +4,9 @@ override CFLAGS += -O3 -Wall
 OBJS = utils.o schema.o
 DEPS = utils.h schema.h
 
+lint:
+	clang-format -style=Google -i *.c *.h
+
 all: sender receiver
 
 # Compile the sender program

@@ -10,25 +10,25 @@
 #define BUFFER_SIZE 100
 
 typedef struct {
-    int flag;      // 1 for message passing, 2 for shared memory
-    int shared_memory_fd;
-    sem_t* semaphore_full;
-    sem_t* semaphore_empty;
-    union{
-        key_t msqid; //for system V api. You can replace it with struecture for POSIX api
-        char* shared_memory_addr;
-    }storage;
+  int flag;  // 1 for message passing, 2 for shared memory
+  int shared_memory_fd;
+  sem_t* semaphore_full;
+  sem_t* semaphore_empty;
+  union {
+    key_t msqid;  // for system V api. You can replace it with struecture for
+                  // POSIX api
+    char* shared_memory_addr;
+  } storage;
 } mailbox_t;
 
-
 typedef struct {
-    char text[BUFFER_SIZE];
+  char text[BUFFER_SIZE];
 } message_t;
 
 typedef struct {
-    struct timespec start_time;
-    struct timespec end_time;
-    double elapsed_time;
+  struct timespec start_time;
+  struct timespec end_time;
+  double elapsed_time;
 } timestamp_t;
 
 #endif
