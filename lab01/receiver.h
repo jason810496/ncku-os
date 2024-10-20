@@ -14,4 +14,4 @@
 
 #include "schema.h"
 
-void receive(message_t* message_ptr, mailbox_t* mailbox_ptr);
+void receive(message_t* message_ptr, mailbox_t* mailbox_ptr, timestamp_t* timestamp_ptr);

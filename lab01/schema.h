@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
+#include <time.h>
 
 #ifndef SCHEMA_H
 #define SCHEMA_H
@@ -23,5 +24,11 @@ typedef struct {
 typedef struct {
     char text[BUFFER_SIZE];
 } message_t;
+
+typedef struct {
+    struct timespec start_time;
+    struct timespec end_time;
+    double elapsed_time;
+} timestamp_t;
 
 #endif

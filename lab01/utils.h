@@ -41,6 +41,7 @@ extern char* START_MESSAGE;
 // constructor
 message_t* create_message(char* text);
 mailbox_t* create_mailbox(enum ipc_method method, enum role cur_role);
+timestamp_t* create_timestamp();
 // destructor
 void free_mailbox(mailbox_t* mailbox,enum role cur_role);
 

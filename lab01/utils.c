@@ -48,6 +48,12 @@ mailbox_t* create_mailbox(enum ipc_method method,enum role cur_role){
     return mailbox;
 }
 
+timestamp_t* create_timestamp(){
+    timestamp_t* timestamp = (timestamp_t*)malloc(sizeof(timestamp_t));
+    timestamp->elapsed_time = 0.0;
+    return timestamp;
+}
+
 void free_mailbox(mailbox_t* mailbox, enum role cur_role){
     if(mailbox->flag == SHARED_MEMORY){
         if(munmap(mailbox->storage.shared_memory_addr, sizeof(message_t)) == -1){
