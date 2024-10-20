@@ -16,6 +16,8 @@ RUN apt-get install -y vim
 RUN apt-get install -y python3
 RUN apt-get install -y python3-pip
 RUN apt-get install -y python3-dev
+# Linters
+RUN apt-get install -y clang-format
 
 
 # zsh quick setup
