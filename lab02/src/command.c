@@ -4,6 +4,18 @@
 #include <string.h>
 #include "../include/command.h"
 
+void debug_cmd_node(struct cmd_node *p)
+{
+	printf("args: \n");
+	struct cmd_node *temp = p;
+	while (temp->args){
+		printf("%s\n", *temp->args);
+		printf("in_file: %s\n", temp->in_file);
+		printf("out_file: %s\n", temp->out_file);
+		temp = temp->next;
+	}
+}
+
 /**
  * @brief Read the user's input string
  * 
@@ -68,6 +80,7 @@ struct cmd *split_line(char *line)
 			new_pipe->next = NULL;
 			temp->next = new_pipe;
 			temp = new_pipe;
+			new_cmd->pipe_num++;
         } else if (token[0] == '<') {
 			token = strtok(NULL, " ");
             temp->in_file = token;
@@ -79,7 +92,6 @@ struct cmd *split_line(char *line)
 			temp->length++;
         }
         token = strtok(NULL, " ");
-		new_cmd->pipe_num++;
 
     }
 

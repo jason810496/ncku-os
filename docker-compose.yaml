@@ -8,5 +8,6 @@ services:
     container_name: os_lab_container
     volumes:
       - ./lab01:/home/lab01
+      - ./lab02:/home/lab02
     tty: true
     stdin_open: true

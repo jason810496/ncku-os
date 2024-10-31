@@ -20,7 +20,47 @@
  * 
  */
 void redirection(struct cmd_node *p){
-	
+	if (p->in_file) {
+		int in_fd = open(p->in_file, O_RDONLY);
+		if (in_fd == -1) {
+			perror("open in_file");
+			exit(EXIT_FAILURE);
+		}
+		if (dup2(in_fd, STDIN_FILENO) == -1) {
+			perror("dup2 in_file");
+			exit(EXIT_FAILURE);
+		}
+		close(in_fd);
+	}
+
+	if (p->out_file) {
+		int out_fd = open(p->out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (out_fd == -1) {
+			perror("open out_file");
+			exit(EXIT_FAILURE);
+		}
+		if (dup2(out_fd, STDOUT_FILENO) == -1) {
+			perror("dup2 out_file");
+			exit(EXIT_FAILURE);
+		}
+		close(out_fd);
+	}
+
+	if (p->in != STDIN_FILENO) {
+		if (dup2(p->in, STDIN_FILENO) == -1) {
+			perror("dup2 in");
+			exit(EXIT_FAILURE);
+		}
+		close(p->in);
+	}
+
+	if (p->out != STDOUT_FILENO) {
+		if (dup2(p->out, STDOUT_FILENO) == -1) {
+			perror("dup2 out");
+			exit(EXIT_FAILURE);
+		}
+		close(p->out);
+	}
 }
 // ===============================================================
 
@@ -37,6 +77,24 @@ void redirection(struct cmd_node *p){
  */
 int spawn_proc(struct cmd_node *p)
 {
+	// fork 
+	pid_t pid = fork();
+	if (pid < 0){
+		perror("fork");
+	}
+	else if (pid == 0){
+		// child process
+		redirection(p);
+		if (execvp(p->args[0], p->args) == -1){
+			perror("execvp");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else{
+		// parent process
+		int status;
+		waitpid(pid, &status, 0);
+	}
   	return 1;
 }
 // ===============================================================
@@ -53,6 +111,26 @@ int spawn_proc(struct cmd_node *p)
  */
 int fork_cmd_node(struct cmd *cmd)
 {
+	int pipe_fd[2];
+	int in = STDIN_FILENO;
+	int out = STDOUT_FILENO;
+	struct cmd_node *temp = cmd->head;
+	while(temp != NULL){
+		if (pipe(pipe_fd) == -1){
+			perror("pipe");
+			exit(EXIT_FAILURE);
+		}
+		temp->out = pipe_fd[1];
+		if(temp->next != NULL){
+			temp->next->in = pipe_fd[0];
+		}
+		else{
+			temp->out = STDOUT_FILENO;
+		}
+		spawn_proc(temp);
+		close(pipe_fd[1]);
+		temp = temp->next;
+	}
 	return 1;
 }
 // ===============================================================
