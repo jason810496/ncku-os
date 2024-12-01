@@ -17,7 +17,8 @@ void spin_lock() {
         "loop:\n\t"
         "mov $0, %%eax\n\t"
         "xchg %%eax, %[lock]\n\t"
-        "js loop\n\t"
+        "cmpl $1, %%eax\n\t"
+        "jne loop\n\t"
         :
         : [lock] "m" (lock)
         : "eax", "memory"
