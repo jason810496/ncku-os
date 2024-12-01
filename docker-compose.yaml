@@ -9,5 +9,6 @@ services:
     volumes:
       - ./lab01:/home/lab01
       - ./lab02:/home/lab02
+      - ./lab03:/home/lab03
     tty: true
     stdin_open: true

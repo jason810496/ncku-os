@@ -26,4 +26,7 @@ RUN apt-get install -y sudo
 RUN git clone https://github.com/jotyGill/ezsh
 RUN cd ezsh && ./install.sh -c
 
+# pthread
+RUN apt-get install -y libpthread-stubs0-dev
+
 CMD [ "tail", "-f", "/dev/null" ]

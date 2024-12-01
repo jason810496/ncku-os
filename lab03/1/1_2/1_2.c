@@ -16,9 +16,7 @@ void spin_lock() {
     asm volatile(
         "loop:\n\t"
         "mov $0, %%eax\n\t"
-        /*YOUR CODE HERE*/
-
-        /****************/
+        "xchg %%eax, %[lock]\n\t"
         "js loop\n\t"
         :
         : [lock] "m" (lock)
@@ -29,9 +27,7 @@ void spin_lock() {
 void spin_unlock() {
     asm volatile(
         "mov $1, %%eax\n\t"
-        /*YOUR CODE HERE*/
-
-        /****************/
+        "xchg %%eax, %[lock]\n\t"
         :
         : [lock] "m" (lock)
         : "eax", "memory"
