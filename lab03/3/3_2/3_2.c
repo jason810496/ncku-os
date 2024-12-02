@@ -74,6 +74,14 @@ void *thread1(void *arg){
     /*YOUR CODE HERE*/
     /* Hint: Write data into proc file.*/
 
+    FILE *fp = fopen("/proc/Mythread_info", "w");
+    if (fp == NULL){
+        printf("Error opening file\n");
+        exit(1);
+    }
+    fprintf(fp, "Hello World from 1\n");
+    fclose(fp);
+
     /****************/ 
 
     char buffer[50]; 
@@ -97,6 +105,14 @@ void *thread2(void *arg){
     
     /*YOUR CODE HERE*/
     /* Hint: Write data into proc file.*/
+
+    FILE *fp = fopen("/proc/Mythread_info", "w");
+    if (fp == NULL){
+        printf("Error opening file\n");
+        exit(1);
+    }
+    fprintf(fp, "Hello World from 2\n");
+    fclose(fp);
 
     /****************/   
 
@@ -136,7 +152,9 @@ int main(){
     pthread_create(&t2, NULL, thread2, NULL);
 #endif
     pthread_join(t1, NULL);
+#if (THREAD_NUMBER==2)
     pthread_join(t2, NULL);
+#endif
 
     for(int i=0; i<matrix_row_x; i++){
         for(int j=0; j<matrix_col_y; j++){

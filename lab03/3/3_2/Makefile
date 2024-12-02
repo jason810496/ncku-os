@@ -14,14 +14,14 @@ clean:
 
 Prog_1thread:
 	@echo "#define THREAD_NUMBER 1" > 3_2_Config.h
-	@$(CC) -o 3_2.out 3_2.c
+	@$(CC) -o 3_2.out 3_2.c -lpthread
 	@sudo ./3_2.out
 	@rm -f 2.txt 3_2.out 3_2_Config.h
 
 Prog_2thread:
 	@rm -f 3_2.txt
 	@echo "#define THREAD_NUMBER 2" > 3_2_Config.h
-	@$(CC) -o 3_2.out 3_2.c
+	@$(CC) -o 3_2.out 3_2.c -lpthread
 	@sudo ./3_2.out
 	@rm -f 2.txt 3_2.out 3_2_Config.h
 
@@ -30,3 +30,11 @@ load:
 
 unload:
 	@sudo rmmod $(TARGET_MODULE).ko
+
+refresh:
+	@if lsmod | grep -q $(TARGET_MODULE); then \
+		sudo rmmod $(TARGET_MODULE); \
+	fi
+	@make clean
+	@make all
+	@make load
