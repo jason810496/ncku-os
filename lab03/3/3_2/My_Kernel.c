@@ -15,11 +15,11 @@ char buf[BUFSIZE]; //kernel buffer
 
 static unsigned long procfs_buffer_size = 0; 
 static unsigned long last_read_pos = -1;
-// enum { 
-//     CDEV_NOT_USED, 
-//     CDEV_EXCLUSIVE_OPEN, 
-// }; 
-// static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED);
+enum { 
+    CDEV_NOT_USED, 
+    CDEV_EXCLUSIVE_OPEN, 
+}; 
+static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED);
 
 
 // // Function to handle opening of the proc file
@@ -41,10 +41,6 @@ static unsigned long last_read_pos = -1;
 
 static ssize_t Mywrite(struct file *fileptr, const char __user *ubuf, size_t buffer_len, loff_t *offset){
     /*Your code here*/
-    if(*offset > 0){
-        // only one write
-        return 0;
-    }
 
     if(buffer_len > BUFSIZE){
         pr_info("My_Kernel: Input size is too large\n");
@@ -56,9 +52,13 @@ static ssize_t Mywrite(struct file *fileptr, const char __user *ubuf, size_t buf
         procfs_buffer_size = BUFSIZE - 1;
     }
 
-    if (copy_from_user(buf, ubuf, procfs_buffer_size)){
+    if (copy_from_user(buf, ubuf, buffer_len)){
         return -EFAULT;
     }
+
+    struct task_struct *p = current;
+    procfs_buffer_size += sprintf(buf + procfs_buffer_size, "PID: %d, TID: %d, Priority: %d, State: %ld\n", 
+        p->tgid, p->pid, p->prio, p->__state);
 
     buf[procfs_buffer_size] = '\0';
     *offset += procfs_buffer_size;
@@ -74,7 +74,7 @@ static ssize_t Mywrite(struct file *fileptr, const char __user *ubuf, size_t buf
 
 static ssize_t Myread(struct file *fileptr, char __user *ubuf, size_t buffer_len, loff_t *offset){
     /*Your code here*/
-    if(last_read_pos == *offset){
+    if(*offset > 0 ){
         // only one read
         return 0;
     }
@@ -89,7 +89,6 @@ static ssize_t Myread(struct file *fileptr, char __user *ubuf, size_t buffer_len
     }
 
     *offset += len;
-    last_read_pos = *offset;
     return len;
 
     /****************/
