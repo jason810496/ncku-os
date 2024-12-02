@@ -6,7 +6,6 @@
 #include <asm/current.h>
 
 #define procfs_name "Mythread_info"
-#define target_name "3_1.out"
 #define BUFSIZE  1024
 char buf[BUFSIZE];
 
@@ -17,51 +16,34 @@ static ssize_t Mywrite(struct file *fileptr, const char __user *ubuf, size_t buf
 
 
 static ssize_t Myread(struct file *fileptr, char __user *ubuf, size_t buffer_len, loff_t *offset){
-    // get all thread information from current process
-    // for each thread, 
-    // print PID, TID, Priority, State
+    if(*offset > 0){
+        // only allow read once
+        return 0;
+    }
 
-    struct task_struct *task_child;
-    struct list_head *list;
+    struct task_struct *p = current;
+    struct task_struct *thread;
+    // struct list_head *list;
     int len = 0;
     char *bufptr = buf;
 
-    // Clear the buffer
-    memset(buf, 0, BUFSIZE);
-
-    len += sprintf(bufptr, "PID: %d\n", current->pid);
-    len += sprintf(bufptr + len, "TID: %d\n", current->tgid);
-    len += sprintf(bufptr + len, "Priority: %d\n", current->prio);
-    len += sprintf(bufptr + len, "State: %c\n", task_state_to_char(current));
-    list_for_each(list, &current->children){
-        task_child = list_entry(list, struct task_struct, sibling);
-        len += sprintf(bufptr + len, "PID: %d\n", task_child->pid);
-        len += sprintf(bufptr + len, "TID: %d\n", task_child->tgid);
-        len += sprintf(bufptr + len, "Priority: %d\n", task_child->prio);
-        len += sprintf(bufptr + len, "State: %c\n", task_state_to_char(task_child));
-
-        // Stop writing if the buffer is full
-        if (len >= BUFSIZE) {
-            break;
-        }
+    for_each_thread(p, thread){
+        len += sprintf(bufptr, "PID: %d, TID: %d, Priority: %d, State: %ld\n", 
+            thread->tgid, thread->pid, thread->prio, thread->__state);
+        bufptr += len;
+        *offset += len;
     }
 
-    // Check if the user buffer is large enough to hold the data
-    if (*offset >= len) {
-        return 0; // End of file
-    }
-    if (buffer_len < len - *offset) {
-        return -EINVAL; // Buffer too small
+    // Ensure the user buffer can hold the data
+    if (buffer_len < len) {
+        return -EINVAL; // Invalid argument error
     }
 
-    // Copy data to the user buffer
-    if (copy_to_user(ubuf, buf + *offset, len - *offset)) {
-        return -EFAULT; // Failed to copy data
+    // Copy data to user space and handle potential errors
+    if (copy_to_user(ubuf, buf, len)) {
+        return -EFAULT; // Bad address error
     }
-
-    // Update the offset and return the number of bytes read
-    *offset += len;
-    return len - *offset;
+    return len;
 }
 
 static struct proc_ops Myops = {
