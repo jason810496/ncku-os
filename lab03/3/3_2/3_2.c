@@ -23,6 +23,8 @@ int **y;
 int **z;
 pid_t tid1, tid2;
 
+pthread_spinlock_t lock;
+
 // Put file data intp x array
 void data_processing(void){
     int tmp;
@@ -74,6 +76,8 @@ void *thread1(void *arg){
     /*YOUR CODE HERE*/
     /* Hint: Write data into proc file.*/
 
+    pthread_spin_lock(&lock);
+
     FILE *fp = fopen("/proc/Mythread_info", "w");
     if (fp == NULL){
         printf("Error opening file\n");
@@ -82,12 +86,12 @@ void *thread1(void *arg){
     fprintf(fp, "Hello World from 1\n");
     fclose(fp);
 
-    /****************/ 
-
     char buffer[50]; 
     while (fgets(buffer, sizeof(buffer), fptr4) != NULL){
         printf("%s", buffer);
     }
+
+    pthread_spin_unlock(&lock);
 }
 
 
@@ -105,7 +109,7 @@ void *thread2(void *arg){
     
     /*YOUR CODE HERE*/
     /* Hint: Write data into proc file.*/
-
+    pthread_spin_lock(&lock);
     FILE *fp = fopen("/proc/Mythread_info", "w");
     if (fp == NULL){
         printf("Error opening file\n");
@@ -114,12 +118,11 @@ void *thread2(void *arg){
     fprintf(fp, "Hello World from 2\n");
     fclose(fp);
 
-    /****************/   
-
     char buffer[50]; 
     while (fgets(buffer, sizeof(buffer), fptr5) != NULL){
         printf("%s", buffer);
     } 
+    pthread_spin_unlock(&lock);
 }
 #endif
 
@@ -147,6 +150,7 @@ int main(){
     data_processing();
     fprintf(fptr3, "%d %d\n", matrix_row_x, matrix_col_y);
 
+    pthread_spin_init(&lock, 0);
     pthread_create(&t1, NULL, thread1, NULL);
 #if (THREAD_NUMBER==2)
     pthread_create(&t2, NULL, thread2, NULL);
@@ -155,6 +159,7 @@ int main(){
 #if (THREAD_NUMBER==2)
     pthread_join(t2, NULL);
 #endif
+    pthread_spin_destroy(&lock);
 
     for(int i=0; i<matrix_row_x; i++){
         for(int j=0; j<matrix_col_y; j++){
