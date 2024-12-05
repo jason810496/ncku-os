@@ -21,15 +21,18 @@ static ssize_t Myread(struct file *fileptr, char __user *ubuf, size_t buffer_len
         return 0;
     }
 
-    struct task_struct *p = current;
+    // struct task_struct *p = current;
     struct task_struct *thread;
     // struct list_head *list;
     int len = 0;
     char *bufptr = buf;
 
-    for_each_thread(p, thread){
+    for_each_thread(current, thread){
+        if( current->pid == thread->pid){
+            continue;
+        }
         len += sprintf(bufptr, "PID: %d, TID: %d, Priority: %d, State: %ld\n", 
-            thread->tgid, thread->pid, thread->prio, thread->__state);
+            current->pid, thread->pid, thread->prio, thread->__state);
         bufptr += len;
         *offset += len;
     }

@@ -57,8 +57,8 @@ static ssize_t Mywrite(struct file *fileptr, const char __user *ubuf, size_t buf
     }
 
     struct task_struct *p = current;
-    procfs_buffer_size += sprintf(buf + procfs_buffer_size, "PID: %d, TID: %d, Priority: %d, State: %ld\n", 
-        p->tgid, p->pid, p->prio, p->__state);
+    procfs_buffer_size += sprintf(buf + procfs_buffer_size, "PID: %d, TID: %d, Time: %llu\n",
+        p->tgid, p->pid, p->utime/100/1000 );
 
     buf[procfs_buffer_size] = '\0';
     *offset += procfs_buffer_size;
