@@ -33,7 +33,7 @@ static ssize_t osfs_read(struct file *filp, char __user *buf, size_t len, loff_t
     if (*ppos + len > osfs_inode->i_size)
         len = osfs_inode->i_size - *ppos;
 
-    data_block = sb_info->data_blocks + osfs_inode->i_block * BLOCK_SIZE + *ppos;
+    data_block = sb_info->data_blocks + osfs_inode->i_blocks * BLOCK_SIZE + *ppos;
     if (copy_to_user(buf, data_block, len))
         return -EFAULT;
 
@@ -67,21 +67,45 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     ssize_t bytes_written;
     int ret;
 
-    // Step2: Check if a data block has been allocated; if not, allocate one
+    pr_info("osfs_write: Writing %zu bytes to file with inode %lu\n", len, inode->i_ino);
+    pr_info("osfs_write: osfs_inode->i_ino: %u, osfs_inode->i_size: %u, osfs_inode->i_blocks: %u\n", osfs_inode->i_ino, osfs_inode->i_size, osfs_inode->i_blocks);
+    pr_info("osfs_write: ppos: %lld\n", *ppos);
 
+    // Step2: Check if a data block has been allocated; if not, allocate one
+    if (osfs_inode->i_blocks == 0) {
+        pr_info("osfs_write: Allocating data block for inode %u\n", osfs_inode->i_ino);
+        osfs_inode->i_block = osfs_alloc_data_block(sb_info, &osfs_inode->i_block);
+        if (osfs_inode->i_block < 0)
+            return osfs_inode->i_block;
+        osfs_inode->i_blocks = 1;
+    }
 
     // Step3: Limit the write length to fit within one data block
+    if (*ppos + len > BLOCK_SIZE) {
+        len = BLOCK_SIZE - *ppos;
+    }
+    pr_info("osfs_write: Adjusted length: %zu\n", len);
 
 
     // Step4: Write data from user space to the data block
+    data_block = sb_info->data_blocks + osfs_inode->i_blocks * BLOCK_SIZE + *ppos;
+    if (copy_from_user(data_block, buf, len)) {
+        pr_err("osfs_write: Failed to copy data from user space\n");
+        return -EFAULT;
+    }
 
 
     // Step5: Update inode & osfs_inode attribute
+    osfs_inode->i_size = *ppos + len;
+    mark_inode_dirty(inode);
+    *ppos += len;
+    bytes_written = len;
 
 
     // Step6: Return the number of bytes written
 
-    
+    pr_info("osfs_write: osfs_inode->i_size: %u, osfs_inode->i_blocks: %u\n", osfs_inode->i_size, osfs_inode->i_blocks);
+    pr_info("osfs_write: bytes_written: %zu\n", bytes_written);
     return bytes_written;
 }
 
