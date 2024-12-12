@@ -88,6 +88,7 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     
     if(*ppos == 0 ){
         osfs_inode->i_size = len;
+        inode->i_size = len;
     }
 
     pr_info("osfs_write: ------------------------\n");
@@ -145,6 +146,8 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     }
 
     // Step5: Update inode & osfs_inode attribute
+    osfs_inode->__i_atime = osfs_inode->__i_mtime = current_time(inode);
+    inode->__i_atime = inode->__i_mtime = osfs_inode->__i_mtime;
     mark_inode_dirty(inode);
 
     pr_info("osfs_write: Debug extents list\n");

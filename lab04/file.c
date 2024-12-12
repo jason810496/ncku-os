@@ -67,6 +67,11 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
     ssize_t bytes_written;
     int ret;
 
+    if(*ppos == 0 ){
+        osfs_inode->i_size = len;
+        inode->i_size = len;
+    }
+
     pr_info("osfs_write: Writing %zu bytes to file with inode %lu\n", len, inode->i_ino);
     pr_info("osfs_write: osfs_inode->i_ino: %u, osfs_inode->i_size: %u, osfs_inode->i_blocks: %u\n", osfs_inode->i_ino, osfs_inode->i_size, osfs_inode->i_blocks);
     pr_info("osfs_write: ppos: %lld\n", *ppos);
@@ -97,6 +102,9 @@ static ssize_t osfs_write(struct file *filp, const char __user *buf, size_t len,
 
     // Step5: Update inode & osfs_inode attribute
     osfs_inode->i_size = *ppos + len;
+    inode->i_size = osfs_inode->i_size;
+    osfs_inode->__i_atime = osfs_inode->__i_mtime = current_time(inode);
+    inode->__i_atime = inode->__i_mtime = osfs_inode->__i_mtime;
     mark_inode_dirty(inode);
     *ppos += len;
     bytes_written = len;
